@@ -205,3 +205,91 @@ class GameTable extends Game {
     destPoint = initialPoint;
   }
 }
+
+
+class TissueBox {
+  Rect get initialRect => Rect.fromLTWH(boxRect.center.dx - Tissue.width / 2, boxRect.top - boxRect.height + 20.3, Tissue.width, Tissue.width);
+  Sprite get getBoxSprite =>Sprite(  rnd.nextInt(7).toString());
+  var tissueAwayList = List<TissueAway>(), rnd = Random(), ismoving = false, isAway = false;
+  Offset get getTissueUpPosition => Offset(initialRect.left, initialRect.top - 150);
+  final GameTable game;
+  Sprite boxSprite;
+  Rect boxRect;
+  int tissueCount;
+  Tissue tissue;
+  double get initialLeft => game.screenSize.width / 2 - TissueBox.boxSize.dx / 2;
+  double get initialTop => game.screenSize.height - game.tileSize * 5.5;
+  static var boxSize = Offset(150.0, 100.0);
+  TissueBox(this.game) {
+    boxRect = Rect.fromLTWH(initialLeft, initialTop, boxSize.dx, boxSize.dy);
+    tissueCount = 10 - rnd.nextInt(5);
+    tissue = Tissue(game, this);
+    boxSprite = getBoxSprite;
+  }
+  render(Canvas c) {
+    boxSprite.renderRect(c, boxRect);
+    tissue.render(c);
+    tissueAwayList.forEach((x) => x.render(c));
+  }
+
+  update(double t) {
+    tissue.update(t);
+    tissueAwayList.removeWhere((x) => x.isAway);
+    tissueAwayList.forEach((x) => x.update(t));
+    var distense = boxRect.left - initialLeft;
+    if (ismoving && !game.gameover) {
+      if (distense.abs() > 50 && tissueCount == 0){
+        isAway = true;
+      }
+    } else if (isAway && !game.gameover) {
+      boxRect = boxRect.shift(Offset(distense > 0 ? boxRect.left + game.k * 11 : boxRect.left - game.k * 11, boxRect.top));
+      if (boxRect.right < -50 || boxRect.left > game.screenSize.width + 50) {
+        newBox();
+      }
+    } else if (isAway && game.gameover) {
+      var target = Offset(boxRect.left, game.screenSize.height + Tissue.width) - Offset(boxRect.left, boxRect.top);
+      boxRect = boxRect.shift(
+        game.k * 11 < target.distance ?
+            Offset.fromDirection(target.direction, game.k * 11)
+          : target);
+    } else {
+      var target = Offset(initialLeft, initialTop) - Offset(boxRect.left, boxRect.top);
+      boxRect = boxRect.shift(
+        game.k * 11 < target.distance ?
+          Offset.fromDirection(target.direction, game.k * 11)
+          : target);
+    }
+  }
+
+  nextTissue(int pointsAdd) {
+    var duration = Duration(milliseconds: 100);
+    tissueAwayList.add(TissueAway(game, this));
+    if (pointsAdd > 1)
+      delay(duration, () {
+        tissueAwayList.add(TissueAway(game, this));
+        if (pointsAdd > 2)
+          delay(duration, () {
+            tissueAwayList.add(TissueAway(game, this));
+          });
+      });
+    tissue = Tissue(game, this, --tissueCount == 0);
+  }
+
+  newBox() {
+    boxSprite = getBoxSprite;
+    boxRect = Rect.fromLTWH(boxRect.right < -0 ? game.screenSize.width + 50 - boxSize.dx : -50.0, initialTop, boxSize.dx, boxSize.dy);
+    tissueCount = 10 - rnd.nextInt(5);
+    tissue = Tissue(game, this);
+    isAway = false;
+    ismoving = false;
+  }
+
+  newGame() async {
+    isAway = true;
+    GameTable.gameOver.resume();
+    await delay(Duration(seconds: 2), () {});
+    newBox();
+  }
+
+  static delay(duration, func()) async => await Future.delayed(duration, func);
+}
