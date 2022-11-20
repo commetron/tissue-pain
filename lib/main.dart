@@ -293,3 +293,18 @@ class TissueBox {
 
   static delay(duration, func()) async => await Future.delayed(duration, func);
 }
+
+
+class Tissue {
+  var tissueSprite = Sprite('t'), isMoving = false;
+  static var width = 100.0;
+  final TissueBox tissueBox;
+  final GameTable game;
+  bool isAway;
+  Rect rect;
+  Tissue(this.game, this.tissueBox, [this.isAway = false]) {
+    rect = tissueBox.initialRect;
+  }
+  render(Canvas c) => tissueSprite.renderRect(c, rect);
+  update(double t) => rect = isAway ? rect.shift(Offset.infinite) : tissueBox.initialRect;
+}
