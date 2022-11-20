@@ -48,3 +48,4 @@ main() async {
   runApp(game.widget);
   util.addGestureRecognizer(hDrag);
   util.addGestureRecognizer(vDrag);
+}
