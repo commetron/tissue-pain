@@ -13,7 +13,6 @@ import 'dart:math';
 main() async {
   var util = Util();
   await util.fullScreen();
-  await util.setOrientation(DeviceOrientation.portraitUp);
   //loadimages
   //tissuebox : 0,1,2,3,4,5,6
   //background : b
